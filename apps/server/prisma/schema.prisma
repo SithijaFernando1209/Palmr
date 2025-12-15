@@ -45,7 +45,7 @@ model File {
   description String?
   extension   String
   size        BigInt
-  objectName  String
+  objectName  String  
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { StaticBackgroundLights } from "../login/components/static-background-lights";
 import { ResetPasswordForm } from "./components/reset-password-form";
 import { ResetPasswordHeader } from "./components/reset-password-header";
@@ -49,7 +47,6 @@ export default function ResetPasswordPage() {
           </motion.div>
         </div>
       </div>
-      <DefaultFooter />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingScreen } from "@/components/layout/loading-screen";
 import { Navbar } from "@/components/layout/navbar";
 import { Card, CardContent } from "@/components/ui/card";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEnhancedFileManager } from "@/hooks/use-enhanced-file-manager";
 import { useShareManager } from "@/hooks/use-share-manager";
@@ -78,7 +77,6 @@ export default function SharesPage() {
             />
           </div>
         </div>
-        <DefaultFooter />
       </div>
     </ProtectedRoute>
   );

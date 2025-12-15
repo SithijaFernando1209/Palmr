@@ -107,6 +107,7 @@ export class ShareService {
       folders,
       securityId: security.id,
       creatorId: userId,
+      password
     });
 
     const shareWithRelations = await this.shareRepository.findShareById(share.id);

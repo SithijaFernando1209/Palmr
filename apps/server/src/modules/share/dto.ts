@@ -12,7 +12,7 @@ export const CreateShareSchema = z
       .optional(),
     files: z.array(z.string()).optional().describe("The file IDs"),
     folders: z.array(z.string()).optional().describe("The folder IDs"),
-    password: z.string().optional().describe("The share password"),
+    password: z.string().min(1, "Password is required").describe("The share password"),
     maxViews: z.number().optional().nullable().describe("The maximum number of views"),
     recipients: z.array(z.string().email()).optional().describe("The recipient emails"),
   })

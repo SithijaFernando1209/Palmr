@@ -87,7 +87,7 @@ export function ShareActionsModals({
     name: "",
     description: "",
     expiresAt: "",
-    isPasswordProtected: false,
+    isPasswordProtected: true,
     password: "",
     maxViews: "",
   });

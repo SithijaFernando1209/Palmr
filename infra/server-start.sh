@@ -55,7 +55,7 @@ if [ ! -f "/app/server/prisma/configs.json" ]; then
 fi
 
 if [ ! -f "/app/server/prisma/palmr.db" ]; then
-    echo "🚀 First run detected - setting up database..."
+    echo "🚀 First run detected - setting up database...(testing)"
     
     echo "🗄️ Creating database schema..."
     run_as_user npx prisma db push --schema=./prisma/schema.prisma --skip-generate
@@ -65,7 +65,7 @@ if [ ! -f "/app/server/prisma/palmr.db" ]; then
     
     echo "✅ Database setup completed!"
 else
-    echo "♻️ Existing database found"
+    echo "♻️ Existing database found...will be used."
     
     echo "🔧 Checking for schema updates..."
     run_as_user npx prisma db push --schema=./prisma/schema.prisma --skip-generate

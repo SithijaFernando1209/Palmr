@@ -80,7 +80,7 @@ export function ShareMultipleItemsModal({ files, folders, isOpen, onClose, onSuc
     description: "",
     password: "",
     expiresAt: "",
-    isPasswordProtected: false,
+    isPasswordProtected: true,
     maxViews: "",
   });
   const [alias, setAlias] = useState(() => generateCustomId());
@@ -112,7 +112,7 @@ export function ShareMultipleItemsModal({ files, folders, isOpen, onClose, onSuc
         description: "",
         password: "",
         expiresAt: "",
-        isPasswordProtected: false,
+        isPasswordProtected: true,
         maxViews: "",
       });
       setAlias(generateCustomId());
@@ -177,7 +177,7 @@ export function ShareMultipleItemsModal({ files, folders, isOpen, onClose, onSuc
       const shareResponse = await createShare({
         name: formData.name,
         description: formData.description || undefined,
-        password: formData.isPasswordProtected ? formData.password : undefined,
+        password:formData.password,
         expiration: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
         maxViews: formData.maxViews ? parseInt(formData.maxViews) : undefined,
         files: allFilesToShare,
@@ -355,7 +355,7 @@ export function ShareMultipleItemsModal({ files, folders, isOpen, onClose, onSuc
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <Switch
                   checked={formData.isPasswordProtected}
                   onCheckedChange={(checked) =>
@@ -371,9 +371,9 @@ export function ShareMultipleItemsModal({ files, folders, isOpen, onClose, onSuc
                   <IconLock size={16} />
                   {t("createShare.passwordProtection")}
                 </Label>
-              </div>
+              </div> */}
 
-              {formData.isPasswordProtected && (
+              {/* {formData.isPasswordProtected && ( */}
                 <div className="space-y-2">
                   <Label>{t("createShare.passwordLabel")}</Label>
                   <Input
@@ -383,7 +383,7 @@ export function ShareMultipleItemsModal({ files, folders, isOpen, onClose, onSuc
                     placeholder={t("createShare.passwordLabel")}
                   />
                 </div>
-              )}
+              {/* )} */}
 
               <div className="space-y-2">
                 <Label>{t("shareMultipleFiles.itemsToShare", { count: allItems.length })}</Label>

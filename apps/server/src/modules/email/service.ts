@@ -232,9 +232,6 @@ export class EmailService {
               <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 12px;">
                 If you didn't expect this email, you can safely ignore it.
               </p>
-              <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 10px;">
-                Powered by <a href="https://kyantech.com.br" style="color: #9ca3af; text-decoration: none;">Kyantech Solutions</a>
-              </p>
             </div>
           </div>
         </body>
@@ -315,9 +312,6 @@ export class EmailService {
               </p>
               <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 12px;">
                 If you didn't expect this email, you can safely ignore it.
-              </p>
-              <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 10px;">
-                Powered by <a href="https://kyantech.com.br" style="color: #9ca3af; text-decoration: none;">Kyantech Solutions</a>
               </p>
             </div>
           </div>

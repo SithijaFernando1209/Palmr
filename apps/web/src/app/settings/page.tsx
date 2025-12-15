@@ -7,7 +7,6 @@ import { LoadingScreen } from "@/components/layout/loading-screen";
 import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { SettingsForm } from "./components/settings-form";
 import { SettingsHeader } from "./components/settings-header";
 import { useSettings } from "./hooks/use-settings";
@@ -49,7 +48,6 @@ export default function SettingsPage() {
               </Card>
             </div>
           </div>
-          <DefaultFooter />
         </div>
       </ProtectedRoute>
     );
@@ -83,7 +81,6 @@ export default function SettingsPage() {
               </Card>
             </div>
           </div>
-          <DefaultFooter />
         </div>
       </ProtectedRoute>
     );
@@ -105,7 +102,6 @@ export default function SettingsPage() {
             />
           </div>
         </div>
-        <DefaultFooter />
       </div>
     </ProtectedRoute>
   );

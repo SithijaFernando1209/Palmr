@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-
 import { CreateShareModal } from "@/components/modals/create-share-modal";
 import { DeleteConfirmationModal } from "@/components/modals/delete-confirmation-modal";
 import { GenerateShareLinkModal } from "@/components/modals/generate-share-link-modal";

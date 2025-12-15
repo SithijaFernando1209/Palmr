@@ -4,7 +4,6 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingScreen } from "@/components/layout/loading-screen";
 import { Navbar } from "@/components/layout/navbar";
 import { Card, CardContent } from "@/components/ui/card";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { ReverseSharesCardsContainer } from "./components/reverse-shares-cards-container";
 import { ReverseSharesHeader } from "./components/reverse-shares-header";
 import { ReverseSharesModals } from "./components/reverse-shares-modals";
@@ -121,7 +120,6 @@ export default function ReverseSharesPage() {
             />
           </div>
         </div>
-        <DefaultFooter />
       </div>
     </ProtectedRoute>
   );

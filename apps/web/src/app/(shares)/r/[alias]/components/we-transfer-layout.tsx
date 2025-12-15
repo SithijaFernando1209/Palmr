@@ -10,7 +10,6 @@ import { BACKGROUND_IMAGES, MESSAGE_TYPES } from "../constants";
 import { WeTransferLayoutProps } from "../types";
 import { FileUploadSection } from "./file-upload-section";
 import { WeTransferStatusMessage } from "./shared/status-message";
-import { TransparentFooter } from "./transparent-footer";
 
 const getRandomBackgroundImage = (): string => {
   const randomIndex = Math.floor(Math.random() * BACKGROUND_IMAGES.length);
@@ -180,8 +179,6 @@ export function WeTransferLayout({
           </div>
         </div>
       </div>
-
-      <TransparentFooter />
     </div>
   );
 }

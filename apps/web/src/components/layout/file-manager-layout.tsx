@@ -12,7 +12,6 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { Separator } from "@/components/ui/separator";
 
 interface FileManagerLayoutProps {
@@ -78,7 +77,6 @@ export function FileManagerLayout({
           {children}
         </div>
       </div>
-      <DefaultFooter />
 
       <DownloadQueueIndicator pendingDownloads={pendingDownloads} onCancelDownload={onCancelDownload} />
     </div>

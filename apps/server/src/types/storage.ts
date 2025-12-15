@@ -8,8 +8,8 @@ export interface StorageConfig {
   endpoint: string;
   port?: number;
   useSSL: boolean;
-  accessKey: string;
-  secretKey: string;
+  accessKey?: string;
+  secretKey?: string;
   region: string;
   bucketName: string;
   forcePathStyle?: boolean;

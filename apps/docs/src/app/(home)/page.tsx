@@ -288,24 +288,6 @@ function GetStarted() {
   );
 }
 
-function FullWidthFooter() {
-  return (
-    <footer className="w-full flex items-center justify-center p-6 border-t font-light container max-w-7xl">
-      <div className="flex items-center gap-1 text-sm max-w-7xl">
-        <span>Powered by</span>
-        <Link
-          href="https://github.com/kyantech"
-          rel="noopener noreferrer"
-          target="_blank"
-          className="flex items-center hover:text-green-700 text-green-500 transition-colors font-light"
-        >
-          Kyantech Solutions ©
-        </Link>
-      </div>
-    </footer>
-  );
-}
-
 export default function HomePage() {
   return (
     <>
@@ -318,7 +300,6 @@ export default function HomePage() {
           <GetStarted />
         </div>
       </main>
-      <FullWidthFooter />
     </>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { LoadingScreen } from "@/components/layout/loading-screen";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { PasswordModal } from "./components/password-modal";
 import { ShareDetails } from "./components/share-details";
 import { ShareHeader } from "./components/share-header";
@@ -58,8 +57,6 @@ export default function PublicSharePage() {
           )}
         </div>
       </main>
-
-      <DefaultFooter />
 
       <PasswordModal
         isError={isPasswordError}

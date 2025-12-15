@@ -31,7 +31,7 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
     description: "",
     password: "",
     expiresAt: "",
-    isPasswordProtected: false,
+    isPasswordProtected: true,
     maxViews: "",
   });
 
@@ -81,7 +81,7 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
         description: "",
         password: "",
         expiresAt: "",
-        isPasswordProtected: false,
+        isPasswordProtected: true,
         maxViews: "",
       });
       setSelectedItems([]);
@@ -92,6 +92,11 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast.error("Share name is required");
+      return;
+    }
+
+    if (!formData.password.trim || formData.password.trim()) {
+      toast.error("Password is required");
       return;
     }
 
@@ -109,7 +114,7 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
       await createShare({
         name: formData.name,
         description: formData.description || undefined,
-        password: formData.isPasswordProtected ? formData.password : undefined,
+        password: formData.password,
         expiration: formData.expiresAt
           ? (() => {
               const dateValue = formData.expiresAt;
@@ -146,8 +151,8 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
   };
 
   const selectedCount = selectedItems.length;
-  const canProceedToFiles = formData.name.trim().length > 0;
-  const canSubmit = formData.name.trim().length > 0 && selectedCount > 0;
+  const canProceedToFiles = formData.name.trim().length > 0 && formData.password.trim().length > 0 ;
+  const canSubmit = formData.name.trim().length > 0 && selectedCount > 0 && formData.password.trim().length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -196,7 +201,7 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
+              {/* <div className="flex items-center space-x-2">
                 <Switch
                   id="password-protection"
                   checked={formData.isPasswordProtected}
@@ -206,9 +211,9 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
                   <IconLock className="h-4 w-4" />
                   {t("createShare.passwordProtection")}
                 </Label>
-              </div>
+              </div> */}
 
-              {formData.isPasswordProtected && (
+              {/* {formData.isPasswordProtected && ( */}
                 <div className="space-y-2">
                   <Label htmlFor="share-password">{t("createShare.passwordLabel")}</Label>
                   <Input
@@ -217,9 +222,11 @@ export function CreateShareModal({ isOpen, onClose, onSuccess, getAllFilesAndFol
                     value={formData.password}
                     onChange={(e) => updateFormData("password", e.target.value)}
                     placeholder="Enter password"
+                    required
+                    aria-required="true"
                   />
                 </div>
-              )}
+              {/* )} */}
 
               <div className="space-y-2">
                 <Label htmlFor="expiration" className="flex items-center gap-2">

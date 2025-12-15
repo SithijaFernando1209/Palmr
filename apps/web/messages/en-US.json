@@ -1005,8 +1005,8 @@
       },
       "password": {
         "label": "Protection Password",
-        "placeholder": "Optional. Add a password to protect the link",
-        "description": "Optional. Users will need this password to access the link.",
+        "placeholder": "Required. Add a password to protect the link",
+        "description": "Required. Users will need this password to access the link.",
         "configurePassword": "Configure Password",
         "protectWithPassword": "Protect with Password",
         "passwordHelp": "Password must be at least 4 characters",

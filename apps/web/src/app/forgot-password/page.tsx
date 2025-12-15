@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { StaticBackgroundLights } from "../login/components/static-background-lights";
 import { ForgotPasswordForm } from "./components/forgot-password-form";
 import { ForgotPasswordHeader } from "./components/forgot-password-header";
@@ -46,7 +44,6 @@ export default function ForgotPasswordPage() {
           </motion.div>
         </div>
       </div>
-      <DefaultFooter />
     </div>
   );
 }

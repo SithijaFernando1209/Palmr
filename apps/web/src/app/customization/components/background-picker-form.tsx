@@ -11,14 +11,12 @@ import { Separator } from "@/components/ui/separator";
 
 const BACKGROUND_OPTIONS = {
   light: [
-    { name: "Default", background: "oklch(0.9911 0 0)", description: "Pure white" },
-    { name: "Warm", background: "oklch(0.99 0.005 85)", description: "Slightly warm tone" },
-    { name: "Cool", background: "oklch(0.99 0.005 230)", description: "Slightly cool tone" },
+{ name: "Default", background: "#EBF0FC", description: "Pure white" },
+{ name: "Ultralight", background: "#f5f7fd", description: "Light blue hue" },
   ],
   dark: [
-    { name: "Default", background: "oklch(0.15 0 0)", description: "Standard dark" },
-    { name: "Darker", background: "oklch(0.13 0 0)", description: "Darker gray" },
-    { name: "Pure Black", background: "oklch(0 0 0)", description: "True black" },
+    { name: "Default", background: "#4e5b6f", description: "Standard dark" },
+    { name: "Cloudy", background: "#6C758E", description: "Dark blue shade" },
   ],
 };
 

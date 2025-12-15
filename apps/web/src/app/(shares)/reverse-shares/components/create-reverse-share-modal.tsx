@@ -85,7 +85,7 @@ const DEFAULT_FORM_VALUES: CreateReverseShareFormData = {
   pageLayout: "DEFAULT",
   nameFieldRequired: "OPTIONAL",
   emailFieldRequired: "OPTIONAL",
-  isPasswordProtected: false,
+  isPasswordProtected: true,
   hasExpiration: false,
   hasFileLimits: false,
   hasFieldRequirements: false,
@@ -132,8 +132,15 @@ export function CreateReverseShareModal({
       payload.expiration = new Date(formData.expiration).toISOString();
     }
 
-    if (formData.isPasswordProtected && formData.password?.trim()) {
+    // if (formData.isPasswordProtected && formData.password?.trim()) {
+    //   payload.password = formData.password.trim();
+    // }
+
+    //Testing to always require password
+    if (formData.password?.trim()) {
       payload.password = formData.password.trim();
+    } else {
+      throw new Error("Password is required for.");
     }
 
     if (formData.hasFileLimits) {
@@ -257,6 +264,30 @@ export function CreateReverseShareModal({
                   )}
                 />
 
+              <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    rules={{
+                      required: watchedValues.isPasswordProtected ? t("validation.passwordRequired") : false,
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("reverseShares.form.password.label")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder={t("reverseShares.form.password.placeholder")}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>{t("reverseShares.form.password.description")}</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
+
                 <FormField
                   control={form.control}
                   name="pageLayout"
@@ -308,42 +339,6 @@ export function CreateReverseShareModal({
                           <Input type="datetime-local" {...field} />
                         </FormControl>
                         <FormDescription>{t("reverseShares.form.expiration.description")}</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Password Protection */}
-              <div className="space-y-4">
-                {renderSectionToggle(
-                  watchedValues.isPasswordProtected,
-                  <IconLock size={ICON_SIZES.medium} />,
-                  t("reverseShares.labels.protectWithPassword"),
-                  toggleSection("isPasswordProtected", ["password"])
-                )}
-
-                {watchedValues.isPasswordProtected && (
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    rules={{
-                      required: watchedValues.isPasswordProtected ? t("validation.passwordRequired") : false,
-                    }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("reverseShares.form.password.label")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder={t("reverseShares.form.password.placeholder")}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>{t("reverseShares.form.password.description")}</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

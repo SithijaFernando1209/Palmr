@@ -3,7 +3,6 @@
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingScreen } from "@/components/layout/loading-screen";
 import { Navbar } from "@/components/layout/navbar";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { UserManagementModals } from "./components/user-management-modals";
 import { UsersHeader } from "./components/users-header";
 import { UsersTable } from "./components/users-table";
@@ -53,7 +52,6 @@ export default function AdminAreaPage() {
             />
           </div>
         </div>
-        <DefaultFooter />
 
         <UserManagementModals
           deleteModalUser={deleteModalUser}

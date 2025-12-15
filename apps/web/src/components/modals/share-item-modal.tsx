@@ -72,7 +72,7 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
         description: "",
         password: "",
         expiresAt: "",
-        isPasswordProtected: false,
+        isPasswordProtected: true,
         maxViews: "",
       });
       setAlias(generateCustomId());
@@ -117,6 +117,11 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
   const handleCreateShare = async () => {
     if (!item) return;
 
+    if (!formData.password || formData.password.trim()) {
+      toast.error(t("validation.passwordRequired") || "Password is required");
+      return;
+    }
+    
     try {
       setIsLoading(true);
 
@@ -157,7 +162,7 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
       description: "",
       password: "",
       expiresAt: "",
-      isPasswordProtected: false,
+      isPasswordProtected: true,
       maxViews: "",
     });
   };
@@ -206,7 +211,7 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
         description: "",
         password: "",
         expiresAt: "",
-        isPasswordProtected: false,
+        isPasswordProtected: true,
         maxViews: "",
       });
     }, 300);
@@ -283,7 +288,7 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <Switch
                 checked={formData.isPasswordProtected}
                 onCheckedChange={(checked) =>
@@ -299,9 +304,9 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
                 <IconLock size={16} />
                 {t("createShare.passwordProtection")}
               </Label>
-            </div>
+            </div> */}
 
-            {formData.isPasswordProtected && (
+            {/* {formData.isPasswordProtected && ( */}
               <div className="space-y-2">
                 <Label>{t("createShare.passwordLabel")}</Label>
                 <Input
@@ -309,9 +314,11 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder={t("createShare.passwordLabel")}
+                  required
+                  aria-required="true"
                 />
               </div>
-            )}
+            {/* )} */}
           </div>
         )}
 
@@ -366,7 +373,7 @@ export function ShareItemModal({ isOpen, file, folder, onClose, onSuccess }: Sha
               <Button variant="outline" onClick={handleClose}>
                 {t("common.cancel")}
               </Button>
-              <Button disabled={isLoading || !formData.name.trim()} onClick={handleCreateShare}>
+              <Button disabled={isLoading || !formData.name.trim() || !formData.password.trim()} onClick={handleCreateShare}>
                 {isLoading ? <div className="animate-spin">⠋</div> : t("createShare.create")}
               </Button>
             </>

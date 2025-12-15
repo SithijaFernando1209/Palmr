@@ -3,7 +3,6 @@
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingScreen } from "@/components/layout/loading-screen";
 import { Navbar } from "@/components/layout/navbar";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { PasswordForm } from "./components/password-form";
 import { ProfileForm } from "./components/profile-form";
 import { ProfileHeader } from "./components/profile-header";
@@ -44,7 +43,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-        <DefaultFooter />
       </div>
     </ProtectedRoute>
   );

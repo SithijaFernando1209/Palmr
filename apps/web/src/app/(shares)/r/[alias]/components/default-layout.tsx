@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/general/language-switcher";
 import { ModeToggle } from "@/components/general/mode-toggle";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { useAppInfo } from "@/contexts/app-info-context";
 import type { DefaultLayoutProps } from "../types";
 import { FileUploadSection } from "./file-upload-section";
@@ -173,9 +172,6 @@ export function DefaultLayout({
           )}
         </div>
       </main>
-
-      {/* Footer */}
-      <DefaultFooter />
     </div>
   );
 }

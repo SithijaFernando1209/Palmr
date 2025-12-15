@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 
 import { LanguageSwitcher } from "@/components/general/language-switcher";
 import { LoadingScreen } from "@/components/layout/loading-screen";
-import { DefaultFooter } from "@/components/ui/default-footer";
 import { useAppInfo } from "@/contexts/app-info-context";
 import { LoginForm } from "./components/login-form";
 import { LoginHeader } from "./components/login-header";
@@ -60,7 +59,6 @@ export default function LoginPage() {
           </motion.div>
         </div>
       </div>
-      <DefaultFooter />
     </div>
   );
 }
