@@ -6,7 +6,9 @@
       "token_expired": "Token süresi doldu. Lütfen tekrar deneyin.",
       "config_error": "Yapılandırma hatası. Lütfen destek ile iletişime geçin.",
       "auth_failed": "Kimlik doğrulama başarısız. Lütfen tekrar deneyin."
-    }
+    },
+    "authenticationFailed": "Kimlik doğrulama başarısız",
+    "successfullyAuthenticated": "Başarıyla kimlik doğrulandı!"
   },
   "authProviders": {
     "title": "Kimlik Doğrulama Sağlayıcıları",
@@ -150,7 +152,9 @@
     "move": "Taşı",
     "rename": "Yeniden Adlandır",
     "search": "Ara",
-    "share": "Paylaş"
+    "share": "Paylaş",
+    "copied": "Kopyalandı",
+    "copy": "Kopyala"
   },
   "createShare": {
     "title": "Paylaşım Oluştur",
@@ -172,7 +176,14 @@
     "tabs": {
       "shareDetails": "Paylaşım Detayları",
       "selectFiles": "Dosyaları Seç"
-    }
+    },
+    "errors": {
+      "nameRequired": "Paylaşım adı gerekli",
+      "selectItems": "Lütfen en az bir dosya veya klasör seçin"
+    },
+    "itemsSelected": "{count} öğe seçildi",
+    "passwordPlaceholder": "Şifre girin",
+    "selectItemsPrompt": "Paylaşmak için dosya ve klasörleri seçin"
   },
   "customization": {
     "breadcrumb": "Özelleştirme",
@@ -302,6 +313,7 @@
   },
   "filePreview": {
     "title": "Dosya Önizleme",
+    "description": "Dosyayı önizleyin ve indirin",
     "loading": "Yükleniyor...",
     "notAvailable": "Bu dosya türü için önizleme mevcut değil.",
     "downloadToView": "Dosyayı indirmek için indirme düğmesini kullanın.",
@@ -337,7 +349,8 @@
     "addToShare": "Paylaşıma ekle",
     "removeFromShare": "Paylaşımdan kaldır",
     "saveChanges": "Değişiklikleri Kaydet",
-    "editFolder": "Klasörü düzenle"
+    "editFolder": "Klasörü düzenle",
+    "itemsSelected": "{count} öğe seçildi"
   },
   "files": {
     "title": "Tüm Dosyalar",
@@ -373,7 +386,12 @@
       "description": "Başlamak için ilk dosyanızı yükleyin veya bir klasör oluşturun"
     },
     "files": "dosyalar",
-    "folders": "klasörler"
+    "folders": "klasörler",
+    "errors": {
+      "moveItemsFailed": "Öğeler taşınamadı. Lütfen tekrar deneyin.",
+      "cannotMoveHere": "Öğeler bu konuma taşınamaz"
+    },
+    "openFolder": "Klasörü aç"
   },
   "filesTable": {
     "ariaLabel": "Dosya Tablosu",
@@ -536,7 +554,10 @@
     "movingTo": "Taşınıyor:",
     "title": "{count, plural, =1 {Öğe} other {Öğeler}} Taşı",
     "description": "{count, plural, =1 {Öğeyi} other {Öğeleri}} yeni konuma taşı",
-    "success": "{count} {count, plural, =1 {öğe} other {öğe}} başarıyla taşındı"
+    "success": "{count} {count, plural, =1 {öğe} other {öğe}} başarıyla taşındı",
+    "errors": {
+      "moveFailed": "Öğeler taşınamadı"
+    }
   },
   "navbar": {
     "logoAlt": "Uygulama Logosu",
@@ -1056,7 +1077,8 @@
     "upload": {
       "metadata": {
         "title": "Dosya Gönder - Palmr",
-        "description": "Paylaşılan bağlantı üzerinden dosya gönderin"
+        "description": "Paylaşılan bağlantı üzerinden dosya gönderin",
+        "descriptionWithLimit": "Dosya yükle (maks. {limit} dosya)"
       },
       "layout": {
         "defaultTitle": "Dosya Gönder",
@@ -1149,8 +1171,6 @@
       },
       "fileActions": {
         "edit": "Düzenle",
-        "save": "Kaydet",
-        "cancel": "İptal",
         "preview": "Önizle",
         "download": "İndir",
         "delete": "Sil",
@@ -1298,6 +1318,10 @@
       "passwordAuthEnabled": {
         "title": "Şifre Doğrulama",
         "description": "Şifre tabanlı doğrulamayı etkinleştirme veya devre dışı bırakma"
+      },
+      "hideVersion": {
+        "title": "Sürümü Gizle",
+        "description": "Tüm sayfaların alt bilgisinde Palmr sürümünü gizle"
       }
     },
     "buttons": {
@@ -1359,22 +1383,16 @@
       "description": "Bu paylaşım silinmiş veya süresi dolmuş olabilir."
     },
     "pageTitle": "Paylaşım",
-    "downloadAll": "Tümünü İndir"
+    "downloadAll": "Tümünü İndir",
+    "metadata": {
+      "defaultDescription": "Dosyaları güvenli bir şekilde paylaşın",
+      "filesShared": "{count, plural, =1 {1 dosya paylaşıldı} other {# dosya paylaşıldı}}"
+    }
   },
   "shareActions": {
     "deleteTitle": "Paylaşımı Sil",
     "deleteConfirmation": "Bu paylaşımı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "editTitle": "Paylaşımı Düzenle",
-    "nameLabel": "Paylaşım Adı",
-    "descriptionLabel": "Açıklama",
-    "descriptionPlaceholder": "Açıklama girin (isteğe bağlı)",
-    "expirationLabel": "Son Kullanma Tarihi",
-    "expirationPlaceholder": "DD/MM/YYYY HH:MM",
-    "maxViewsLabel": "Maksimum Görüntüleme",
-    "maxViewsPlaceholder": "Sınırsız için boş bırakın",
-    "passwordProtection": "Şifre Korumalı",
-    "passwordLabel": "Şifre",
-    "passwordPlaceholder": "Şifre girin",
     "newPasswordLabel": "Yeni Şifre (mevcut şifreyi korumak için boş bırakın)",
     "newPasswordPlaceholder": "Yeni şifre girin",
     "manageFilesTitle": "Dosyaları Yönet",
@@ -1393,7 +1411,9 @@
     "linkDescriptionFile": "Dosyayı paylaşmak için özel bağlantı oluşturun",
     "linkDescriptionFolder": "Klasörü paylaşmak için özel bağlantı oluşturun",
     "linkReady": "Paylaşım bağlantınız hazır:",
-    "linkTitle": "Bağlantı Oluştur"
+    "linkTitle": "Bağlantı Oluştur",
+    "itemsSelected": "{count} öğe seçildi",
+    "manageFilesDescription": "Bu paylaşıma dahil edilecek dosya ve klasörleri seçin"
   },
   "shareDetails": {
     "title": "Paylaşım Detayları",
@@ -1409,7 +1429,6 @@
     "noLink": "Henüz bağlantı oluşturulmadı",
     "copyLink": "Bağlantıyı kopyala",
     "openLink": "Yeni sekmede aç",
-    "linkCopied": "Bağlantı panoya kopyalandı",
     "views": "Görüntüleme",
     "dates": "Tarihler",
     "created": "Oluşturuldu",
@@ -1457,28 +1476,6 @@
     "expires": "Sona erer:",
     "expirationDate": "Son Kullanma Tarihi"
   },
-  "shareFile": {
-    "title": "Dosya Paylaş",
-    "linkTitle": "Bağlantı Oluştur",
-    "nameLabel": "Paylaşım Adı",
-    "namePlaceholder": "Paylaşım adı girin",
-    "descriptionLabel": "Açıklama",
-    "descriptionPlaceholder": "Açıklama girin (isteğe bağlı)",
-    "expirationLabel": "Son Kullanma Tarihi",
-    "expirationPlaceholder": "DD/MM/YYYY HH:MM",
-    "maxViewsLabel": "Maksimum Görüntüleme",
-    "maxViewsPlaceholder": "Sınırsız için boş bırakın",
-    "passwordProtection": "Şifre Korumalı",
-    "passwordLabel": "Şifre",
-    "passwordPlaceholder": "Şifre girin",
-    "linkDescription": "Dosyayı paylaşmak için özel bağlantı oluşturun",
-    "aliasLabel": "Bağlantı Takma Adı",
-    "aliasPlaceholder": "Özel takma ad girin",
-    "linkReady": "Paylaşım bağlantınız hazır:",
-    "createShare": "Paylaşım Oluştur",
-    "generateLink": "Bağlantı Oluştur",
-    "copyLink": "Bağlantıyı Kopyala"
-  },
   "shareManager": {
     "deleteSuccess": "Paylaşım başarıyla silindi",
     "deleteError": "Paylaşım silinemedi",
@@ -1508,7 +1505,10 @@
     "noFilesToDownload": "İndirilebilecek dosya yok",
     "singleShareZipName": "{Sharename} _files.zip",
     "zipDownloadError": "Zip dosyası oluşturulamadı",
-    "zipDownloadSuccess": "Zip dosyası başarıyla indirildi"
+    "zipDownloadSuccess": "Zip dosyası başarıyla indirildi",
+    "errors": {
+      "multipleDownloadNotSupported": "Çoklu paylaşım indirme henüz desteklenmiyor - lütfen paylaşımları ayrı ayrı indirin"
+    }
   },
   "shareMultipleFiles": {
     "title": "Çoklu Dosya Paylaş",
@@ -1905,6 +1905,23 @@
       "inactive": "Devre Dışı",
       "admin": "Yönetici",
       "userr": "Kullanıcı"
+    },
+    "invite": {
+      "button": "Davet Bağlantısı Oluştur",
+      "title": "Kullanıcı Davet Bağlantısı Oluştur",
+      "description": "Birinin kendi hesabını oluşturmasına izin veren tek kullanımlık bir bağlantı oluşturun. Bağlantı 15 dakika içinde sona erer.",
+      "generating": "Oluşturuluyor...",
+      "generate": "Bağlantı Oluştur",
+      "generated": "Davet bağlantısı başarıyla oluşturuldu!",
+      "linkReady": "Davet bağlantısı hazır",
+      "linkReadyDescription": "Bu bağlantıyı davet etmek istediğiniz kişiyle paylaşın. Normal bir kullanıcı olarak kendi hesaplarını oluşturabilecekler.",
+      "copyLink": "Bağlantıyı Kopyala",
+      "linkCopied": "Davet bağlantısı panoya kopyalandı!",
+      "expiresIn": "15 dakika içinde sona erer",
+      "close": "Kapat",
+      "errors": {
+        "generateFailed": "Davet bağlantısı oluşturulamadı"
+      }
     }
   },
   "validation": {
@@ -1921,5 +1938,64 @@
     "passwordRequired": "Şifre gerekli",
     "nameRequired": "İsim gereklidir",
     "required": "Bu alan zorunludur"
+  },
+  "embedCode": {
+    "title": "Medyayı Yerleştir",
+    "description": "Bu medyayı forumlara, web sitelerine veya diğer platformlara yerleştirmek için bu kodları kullanın",
+    "tabs": {
+      "directLink": "Doğrudan Bağlantı",
+      "html": "HTML",
+      "bbcode": "BBCode"
+    },
+    "directLinkDescription": "Medya dosyasının doğrudan URL'si",
+    "htmlDescription": "Medyayı HTML sayfalarına yerleştirmek için bu kodu kullanın",
+    "bbcodeDescription": "BBCode destekleyen forumlara medyayı yerleştirmek için bu kodu kullanın"
+  },
+  "contextMenu": {
+    "newFolder": "Yeni klasör",
+    "uploadFile": "Dosya yükle"
+  },
+  "registerWithInvite": {
+    "title": "Hesabınızı Oluşturun",
+    "description": "Hesabınızı oluşturmak için aşağıdaki bilgileri doldurun",
+    "labels": {
+      "firstName": "Ad",
+      "firstNamePlaceholder": "Adınızı girin",
+      "lastName": "Soyad",
+      "lastNamePlaceholder": "Soyadınızı girin",
+      "username": "Kullanıcı Adı",
+      "usernamePlaceholder": "Bir kullanıcı adı seçin",
+      "email": "E-posta",
+      "emailPlaceholder": "E-postanızı girin",
+      "password": "Şifre",
+      "passwordPlaceholder": "Bir şifre seçin",
+      "confirmPassword": "Şifreyi Onayla",
+      "confirmPasswordPlaceholder": "Şifrenizi onaylayın"
+    },
+    "buttons": {
+      "creating": "Hesap oluşturuluyor...",
+      "createAccount": "Hesap Oluştur"
+    },
+    "validation": {
+      "firstNameRequired": "Ad gerekli",
+      "lastNameRequired": "Soyad gerekli",
+      "usernameMinLength": "Kullanıcı adı en az 3 karakter olmalıdır",
+      "invalidEmail": "Geçersiz e-posta",
+      "passwordMinLength": "Şifre en az 8 karakter olmalıdır",
+      "passwordsMatch": "Şifreler eşleşmelidir"
+    },
+    "messages": {
+      "success": "Hesap başarıyla oluşturuldu! Girişe yönlendiriliyor...",
+      "redirecting": "Girişe yönlendiriliyor..."
+    },
+    "errors": {
+      "invalidToken": "Davet bağlantısında hata",
+      "tokenUsed": "Bu davet bağlantısı zaten kullanılmış",
+      "tokenExpired": "Bu davet bağlantısının süresi dolmuş",
+      "usernameExists": "Kullanıcı adı zaten mevcut",
+      "emailExists": "E-posta zaten mevcut",
+      "createFailed": "Hesap oluşturulamadı. Lütfen tekrar deneyin."
+    },
+    "pageTitle": "Hesap Oluştur"
   }
 }

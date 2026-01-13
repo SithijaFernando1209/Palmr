@@ -3,6 +3,12 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { env } from "../../env";
 import { prisma } from "../../shared/prisma";
+import {
+  generateUniqueFileName,
+  generateUniqueFileNameForRename,
+  parseFileName,
+} from "../../utils/file-name-generator";
+import { getContentType } from "../../utils/mime-types";
 import { ConfigService } from "../config/service";
 import {
   CheckFileInput,
@@ -22,31 +28,30 @@ export class FileController {
   private fileService = new FileService();
   private configService = new ConfigService();
 
-  async getPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const { filename, extension } = request.query as {
-        filename?: string;
-        extension?: string;
-      };
-      if (!filename || !extension) {
-        return reply.status(400).send({
-          error: "The 'filename' and 'extension' parameters are required.",
-        });
-      }
+  async getPresignedUrl(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    const { filename, extension } = request.query as { filename: string; extension: string };
 
+    if (!filename || !extension) {
+      return reply.status(400).send({ error: "filename and extension are required" });
+    }
+
+    try {
+      // JWT already verified by preValidation in routes.ts
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.status(401).send({ error: "Unauthorized: a valid token is required to access this resource." });
+        return reply.status(401).send({ error: "Unauthorized" });
       }
 
-      const objectName = `${userId}/${Date.now()}-${filename}.${extension}`;
+      // Generate unique object name
+      const objectName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}-${filename}.${extension}`;
       const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
 
       const url = await this.fileService.getPresignedPutUrl(objectName, expires);
-      return reply.send({ url, objectName });
+
+      return reply.status(200).send({ url, objectName });
     } catch (error) {
       console.error("Error in getPresignedUrl:", error);
-      return reply.status(500).send({ error: "Internal server error." });
+      return reply.status(500).send({ error: "Internal server error" });
     }
   }
 
@@ -93,9 +98,13 @@ export class FileController {
         }
       }
 
+      // Parse the filename and generate a unique name if there's a duplicate
+      const { baseName, extension } = parseFileName(input.name);
+      const uniqueName = await generateUniqueFileName(baseName, extension, userId, input.folderId);
+
       const fileRecord = await prisma.file.create({
         data: {
-          name: input.name,
+          name: uniqueName,
           description: input.description,
           extension: input.extension,
           size: BigInt(input.size),
@@ -169,9 +178,20 @@ export class FileController {
         });
       }
 
-      return reply.status(201).send({
+      // Check for duplicate filename and provide the suggested unique name
+      const { baseName, extension } = parseFileName(input.name);
+      const uniqueName = await generateUniqueFileName(baseName, extension, userId, input.folderId);
+
+      // Include suggestedName in response if the name was changed
+      const response: any = {
         message: "File checks succeeded.",
-      });
+      };
+
+      if (uniqueName !== input.name) {
+        response.suggestedName = uniqueName;
+      }
+
+      return reply.status(201).send(response);
     } catch (error: any) {
       console.error("Error in checkFile:", error);
       return reply.status(400).send({ error: error.message });
@@ -180,11 +200,10 @@ export class FileController {
 
   async getDownloadUrl(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { objectName: encodedObjectName } = request.params as {
+      const { objectName, password } = request.query as {
         objectName: string;
+        password?: string;
       };
-      const objectName = decodeURIComponent(encodedObjectName);
-      const { password } = request.query as { password?: string };
 
       if (!objectName) {
         return reply.status(400).send({ error: "The 'objectName' parameter is required." });
@@ -197,8 +216,6 @@ export class FileController {
       }
 
       let hasAccess = false;
-
-      console.log("Requested file with password " + password);
 
       const shares = await prisma.share.findMany({
         where: {
@@ -242,10 +259,122 @@ export class FileController {
 
       const fileName = fileRecord.name;
       const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
+
+      // Always use presigned URLs (works for both internal and external storage)
       const url = await this.fileService.getPresignedGetUrl(objectName, expires, fileName);
       return reply.send({ url, expiresIn: expires });
     } catch (error) {
       console.error("Error in getDownloadUrl:", error);
+      return reply.status(500).send({ error: "Internal server error." });
+    }
+  }
+
+  async downloadFile(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { objectName, password } = request.query as {
+        objectName: string;
+        password?: string;
+      };
+
+      if (!objectName) {
+        return reply.status(400).send({ error: "The 'objectName' parameter is required." });
+      }
+
+      const fileRecord = await prisma.file.findFirst({ where: { objectName } });
+
+      if (!fileRecord) {
+        if (objectName.startsWith("reverse-shares/")) {
+          const reverseShareFile = await prisma.reverseShareFile.findFirst({
+            where: { objectName },
+            include: {
+              reverseShare: true,
+            },
+          });
+
+          if (!reverseShareFile) {
+            return reply.status(404).send({ error: "File not found." });
+          }
+
+          try {
+            await request.jwtVerify();
+            const userId = (request as any).user?.userId;
+
+            if (!userId || reverseShareFile.reverseShare.creatorId !== userId) {
+              return reply.status(401).send({ error: "Unauthorized access to file." });
+            }
+          } catch (err) {
+            return reply.status(401).send({ error: "Unauthorized access to file." });
+          }
+
+          // Stream from S3/storage system
+          const stream = await this.fileService.getObjectStream(objectName);
+          const contentType = getContentType(reverseShareFile.name);
+          const fileName = reverseShareFile.name;
+
+          reply.header("Content-Type", contentType);
+          reply.header("Content-Disposition", `inline; filename="${encodeURIComponent(fileName)}"`);
+          reply.header("Content-Length", reverseShareFile.size.toString());
+
+          return reply.send(stream);
+        }
+
+        return reply.status(404).send({ error: "File not found." });
+      }
+
+      let hasAccess = false;
+
+      const shares = await prisma.share.findMany({
+        where: {
+          files: {
+            some: {
+              id: fileRecord.id,
+            },
+          },
+        },
+        include: {
+          security: true,
+        },
+      });
+
+      for (const share of shares) {
+        if (!share.security.password) {
+          hasAccess = true;
+          break;
+        } else if (password) {
+          const isPasswordValid = await bcrypt.compare(password, share.security.password);
+          if (isPasswordValid) {
+            hasAccess = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasAccess) {
+        try {
+          await request.jwtVerify();
+          const userId = (request as any).user?.userId;
+          if (userId && fileRecord.userId === userId) {
+            hasAccess = true;
+          }
+        } catch (err) {}
+      }
+
+      if (!hasAccess) {
+        return reply.status(401).send({ error: "Unauthorized access to file." });
+      }
+
+      // Stream from S3/MinIO
+      const stream = await this.fileService.getObjectStream(objectName);
+      const contentType = getContentType(fileRecord.name);
+      const fileName = fileRecord.name;
+
+      reply.header("Content-Type", contentType);
+      reply.header("Content-Disposition", `inline; filename="${encodeURIComponent(fileName)}"`);
+      reply.header("Content-Length", fileRecord.size.toString());
+
+      return reply.send(stream);
+    } catch (error) {
+      console.error("Error in downloadFile:", error);
       return reply.status(500).send({ error: "Internal server error." });
     }
   }
@@ -359,6 +488,13 @@ export class FileController {
         return reply.status(403).send({ error: "Access denied." });
       }
 
+      // If renaming the file, check for duplicates and auto-rename if necessary
+      if (updateData.name && updateData.name !== fileRecord.name) {
+        const { baseName, extension } = parseFileName(updateData.name);
+        const uniqueName = await generateUniqueFileNameForRename(baseName, extension, userId, fileRecord.folderId, id);
+        updateData.name = uniqueName;
+      }
+
       const updatedFile = await prisma.file.update({
         where: { id },
         data: updateData,
@@ -444,6 +580,50 @@ export class FileController {
     }
   }
 
+  async embedFile(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = request.params as { id: string };
+
+      if (!id) {
+        return reply.status(400).send({ error: "File ID is required." });
+      }
+
+      const fileRecord = await prisma.file.findUnique({ where: { id } });
+
+      if (!fileRecord) {
+        return reply.status(404).send({ error: "File not found." });
+      }
+
+      const extension = fileRecord.extension.toLowerCase();
+      const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico", "avif"];
+      const videoExts = ["mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv"];
+      const audioExts = ["mp3", "wav", "ogg", "m4a", "flac", "aac", "wma"];
+
+      const isMedia = imageExts.includes(extension) || videoExts.includes(extension) || audioExts.includes(extension);
+
+      if (!isMedia) {
+        return reply.status(403).send({
+          error: "Embed is only allowed for images, videos, and audio files.",
+        });
+      }
+
+      // Stream from S3/MinIO
+      const stream = await this.fileService.getObjectStream(fileRecord.objectName);
+      const contentType = getContentType(fileRecord.name);
+      const fileName = fileRecord.name;
+
+      reply.header("Content-Type", contentType);
+      reply.header("Content-Disposition", `inline; filename="${encodeURIComponent(fileName)}"`);
+      reply.header("Content-Length", fileRecord.size.toString());
+      reply.header("Cache-Control", "public, max-age=31536000"); // Cache por 1 ano
+
+      return reply.send(stream);
+    } catch (error) {
+      console.error("Error in embedFile:", error);
+      return reply.status(500).send({ error: "Internal server error." });
+    }
+  }
+
   private async getAllUserFilesRecursively(userId: string): Promise<any[]> {
     const rootFiles = await prisma.file.findMany({
       where: { userId, folderId: null },
@@ -467,5 +647,124 @@ export class FileController {
     }
 
     return allFiles;
+  }
+
+  // Multipart upload endpoints
+  async createMultipartUpload(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    try {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.status(401).send({ error: "Unauthorized" });
+      }
+
+      const { filename, extension } = request.body as { filename: string; extension: string };
+
+      if (!filename || !extension) {
+        return reply.status(400).send({ error: "filename and extension are required" });
+      }
+
+      // Generate unique object name (same pattern as simple upload)
+      const objectName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}-${filename}.${extension}`;
+
+      const uploadId = await this.fileService.createMultipartUpload(objectName);
+
+      return reply.status(200).send({
+        uploadId,
+        objectName,
+        message: "Multipart upload initialized",
+      });
+    } catch (error) {
+      console.error("[Multipart] Error creating multipart upload:", error);
+      return reply.status(500).send({ error: "Failed to create multipart upload" });
+    }
+  }
+
+  async getMultipartPartUrl(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    try {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.status(401).send({ error: "Unauthorized" });
+      }
+
+      const { uploadId, objectName, partNumber } = request.query as {
+        uploadId: string;
+        objectName: string;
+        partNumber: string;
+      };
+
+      if (!uploadId || !objectName || !partNumber) {
+        return reply.status(400).send({ error: "uploadId, objectName, and partNumber are required" });
+      }
+
+      const partNum = parseInt(partNumber);
+      if (isNaN(partNum) || partNum < 1 || partNum > 10000) {
+        return reply.status(400).send({ error: "partNumber must be between 1 and 10000" });
+      }
+
+      const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
+
+      const url = await this.fileService.getPresignedPartUrl(objectName, uploadId, partNum, expires);
+
+      return reply.status(200).send({ url });
+    } catch (error) {
+      console.error("[Multipart] Error getting part URL:", error);
+      return reply.status(500).send({ error: "Failed to get presigned URL for part" });
+    }
+  }
+
+  async completeMultipartUpload(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    try {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.status(401).send({ error: "Unauthorized" });
+      }
+
+      const { uploadId, objectName, parts } = request.body as {
+        uploadId: string;
+        objectName: string;
+        parts: Array<{ PartNumber: number; ETag: string }>;
+      };
+
+      if (!uploadId || !objectName || !parts || !Array.isArray(parts)) {
+        return reply.status(400).send({ error: "uploadId, objectName, and parts are required" });
+      }
+
+      await this.fileService.completeMultipartUpload(objectName, uploadId, parts);
+
+      return reply.status(200).send({
+        message: "Multipart upload completed successfully",
+        objectName,
+      });
+    } catch (error) {
+      console.error("[Multipart] Error completing multipart upload:", error);
+      return reply.status(500).send({ error: "Failed to complete multipart upload" });
+    }
+  }
+
+  async abortMultipartUpload(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    try {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.status(401).send({ error: "Unauthorized" });
+      }
+
+      const { uploadId, objectName } = request.body as {
+        uploadId: string;
+        objectName: string;
+      };
+
+      if (!uploadId || !objectName) {
+        return reply.status(400).send({ error: "uploadId and objectName are required" });
+      }
+
+      await this.fileService.abortMultipartUpload(objectName, uploadId);
+
+      return reply.status(200).send({
+        message: "Multipart upload aborted successfully",
+      });
+    } catch (error) {
+      console.error("[Multipart] Error aborting multipart upload:", error);
+      return reply.status(500).send({ error: "Failed to abort multipart upload" });
+    }
   }
 }

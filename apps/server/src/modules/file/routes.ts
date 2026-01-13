@@ -106,17 +106,15 @@ export async function fileRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    "/files/:objectName/download",
+    "/files/download-url",
     {
       schema: {
         tags: ["File"],
         operationId: "getDownloadUrl",
         summary: "Get Download URL",
         description: "Generates a pre-signed URL for downloading a file",
-        params: z.object({
-          objectName: z.string().min(1, "The objectName is required"),
-        }),
         querystring: z.object({
+          objectName: z.string().min(1, "The objectName is required"),
           password: z.string().optional().describe("Share password if required"),
         }),
         response: {
@@ -131,6 +129,46 @@ export async function fileRoutes(app: FastifyInstance) {
       },
     },
     fileController.getDownloadUrl.bind(fileController)
+  );
+
+  app.get(
+    "/embed/:id",
+    {
+      schema: {
+        tags: ["File"],
+        operationId: "embedFile",
+        summary: "Embed File (Public Access)",
+        description:
+          "Returns a media file (image/video/audio) for public embedding without authentication. Only works for media files.",
+        params: z.object({
+          id: z.string().min(1, "File ID is required").describe("The file ID"),
+        }),
+        response: {
+          400: z.object({ error: z.string().describe("Error message") }),
+          403: z.object({ error: z.string().describe("Error message - not a media file") }),
+          404: z.object({ error: z.string().describe("Error message") }),
+          500: z.object({ error: z.string().describe("Error message") }),
+        },
+      },
+    },
+    fileController.embedFile.bind(fileController)
+  );
+
+  app.get(
+    "/files/download",
+    {
+      schema: {
+        tags: ["File"],
+        operationId: "downloadFile",
+        summary: "Download File",
+        description: "Downloads a file directly (returns file content)",
+        querystring: z.object({
+          objectName: z.string().min(1, "The objectName is required"),
+          password: z.string().optional().describe("Share password if required"),
+        }),
+      },
+    },
+    fileController.downloadFile.bind(fileController)
   );
 
   app.get(
@@ -270,5 +308,123 @@ export async function fileRoutes(app: FastifyInstance) {
       },
     },
     fileController.deleteFile.bind(fileController)
+  );
+
+  // Multipart upload routes
+  app.post(
+    "/files/multipart/create",
+    {
+      preValidation,
+      schema: {
+        tags: ["File"],
+        operationId: "createMultipartUpload",
+        summary: "Create Multipart Upload",
+        description:
+          "Initializes a multipart upload for large files (≥100MB). Returns uploadId for subsequent part uploads.",
+        body: z.object({
+          filename: z.string().min(1).describe("The filename without extension"),
+          extension: z.string().min(1).describe("The file extension"),
+        }),
+        response: {
+          200: z.object({
+            uploadId: z.string().describe("The upload ID for this multipart upload"),
+            objectName: z.string().describe("The object name in storage"),
+            message: z.string().describe("Success message"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    fileController.createMultipartUpload.bind(fileController)
+  );
+
+  app.get(
+    "/files/multipart/part-url",
+    {
+      preValidation,
+      schema: {
+        tags: ["File"],
+        operationId: "getMultipartPartUrl",
+        summary: "Get Presigned URL for Part",
+        description: "Gets a presigned URL for uploading a specific part of a multipart upload",
+        querystring: z.object({
+          uploadId: z.string().min(1).describe("The multipart upload ID"),
+          objectName: z.string().min(1).describe("The object name"),
+          partNumber: z.string().min(1).describe("The part number (1-10000)"),
+        }),
+        response: {
+          200: z.object({
+            url: z.string().describe("The presigned URL for uploading this part"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    fileController.getMultipartPartUrl.bind(fileController)
+  );
+
+  app.post(
+    "/files/multipart/complete",
+    {
+      preValidation,
+      schema: {
+        tags: ["File"],
+        operationId: "completeMultipartUpload",
+        summary: "Complete Multipart Upload",
+        description: "Completes a multipart upload by combining all uploaded parts",
+        body: z.object({
+          uploadId: z.string().min(1).describe("The multipart upload ID"),
+          objectName: z.string().min(1).describe("The object name"),
+          parts: z
+            .array(
+              z.object({
+                PartNumber: z.number().min(1).max(10000).describe("The part number"),
+                ETag: z.string().min(1).describe("The ETag returned from uploading the part"),
+              })
+            )
+            .describe("Array of uploaded parts"),
+        }),
+        response: {
+          200: z.object({
+            message: z.string().describe("Success message"),
+            objectName: z.string().describe("The completed object name"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    fileController.completeMultipartUpload.bind(fileController)
+  );
+
+  app.post(
+    "/files/multipart/abort",
+    {
+      preValidation,
+      schema: {
+        tags: ["File"],
+        operationId: "abortMultipartUpload",
+        summary: "Abort Multipart Upload",
+        description: "Aborts a multipart upload and cleans up all uploaded parts",
+        body: z.object({
+          uploadId: z.string().min(1).describe("The multipart upload ID"),
+          objectName: z.string().min(1).describe("The object name"),
+        }),
+        response: {
+          200: z.object({
+            message: z.string().describe("Success message"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    fileController.abortMultipartUpload.bind(fileController)
   );
 }

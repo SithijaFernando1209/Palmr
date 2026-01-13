@@ -319,59 +319,12 @@ export class ReverseShareController {
 
       const { fileId } = request.params as { fileId: string };
 
-      const fileInfo = await this.reverseShareService.getFileInfo(fileId, userId);
-      const downloadId = `reverse-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      // Pass request context for internal storage proxy URLs
+      const requestContext = { protocol: "https", host: "localhost" }; // Simplified - frontend will handle the real URL
 
-      const { DownloadMemoryManager } = await import("../../utils/download-memory-manager.js");
-      const memoryManager = DownloadMemoryManager.getInstance();
+      const result = await this.reverseShareService.downloadReverseShareFile(fileId, userId, requestContext);
 
-      const fileSizeMB = Number(fileInfo.size) / (1024 * 1024);
-      console.log(
-        `[REVERSE-DOWNLOAD] Requesting slot for ${downloadId}: ${fileInfo.name} (${fileSizeMB.toFixed(1)}MB)`
-      );
-
-      try {
-        await memoryManager.requestDownloadSlot(downloadId, {
-          fileName: fileInfo.name,
-          fileSize: Number(fileInfo.size),
-          objectName: fileInfo.objectName,
-        });
-      } catch (error: any) {
-        console.warn(`[REVERSE-DOWNLOAD] Queued ${downloadId}: ${error.message}`);
-        return reply.status(202).send({
-          queued: true,
-          downloadId: downloadId,
-          message: "Download queued due to memory constraints",
-          estimatedWaitTime: error.estimatedWaitTime || 60,
-        });
-      }
-
-      console.log(`[REVERSE-DOWNLOAD] Starting ${downloadId}: ${fileInfo.name} (${fileSizeMB.toFixed(1)}MB)`);
-      memoryManager.startDownload(downloadId);
-
-      try {
-        const result = await this.reverseShareService.downloadReverseShareFile(fileId, userId);
-
-        const originalUrl = result.url;
-        reply.header("X-Download-ID", downloadId);
-
-        reply.raw.on("finish", () => {
-          memoryManager.endDownload(downloadId);
-        });
-
-        reply.raw.on("close", () => {
-          memoryManager.endDownload(downloadId);
-        });
-
-        reply.raw.on("error", () => {
-          memoryManager.endDownload(downloadId);
-        });
-
-        return reply.send(result);
-      } catch (downloadError) {
-        memoryManager.endDownload(downloadId);
-        throw downloadError;
-      }
+      return reply.send(result);
     } catch (error: any) {
       if (error.message === "File not found") {
         return reply.status(404).send({ error: error.message });
@@ -513,11 +466,7 @@ export class ReverseShareController {
         return reply.status(401).send({ error: "Unauthorized" });
       }
 
-      console.log(`Copy to my files: User ${userId} copying file ${fileId}`);
-
       const file = await this.reverseShareService.copyReverseShareFileToUserFiles(fileId, userId);
-
-      console.log(`Copy to my files: Successfully copied file ${fileId}`);
 
       return reply.send({ file, message: "File copied to your files successfully" });
     } catch (error: any) {
@@ -534,6 +483,172 @@ export class ReverseShareController {
       }
       console.error("Error in copyFileToUserFiles:", error);
       return reply.status(500).send({ error: "Internal server error" });
+    }
+  }
+
+  // Multipart upload endpoints for reverse shares
+  async createMultipartUploadByAlias(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { alias } = request.params as { alias: string };
+      const { password } = request.query as { password?: string };
+      const { filename, extension } = request.body as { filename: string; extension: string };
+
+      if (!filename || !extension) {
+        return reply.status(400).send({ error: "filename and extension are required" });
+      }
+
+      const result = await this.reverseShareService.createMultipartUploadByAlias(alias, filename, extension, password);
+      return reply.status(200).send({
+        uploadId: result.uploadId,
+        objectName: result.objectName,
+        message: "Multipart upload initialized",
+      });
+    } catch (error: any) {
+      console.error("[Multipart] Create multipart upload error:", error);
+      if (error.message === "Reverse share not found") {
+        return reply.status(404).send({ error: error.message });
+      }
+      if (error.message === "Reverse share is inactive") {
+        return reply.status(403).send({ error: error.message });
+      }
+      if (error.message === "Reverse share has expired") {
+        return reply.status(410).send({ error: error.message });
+      }
+      if (error.message === "Password required" || error.message === "Invalid password") {
+        return reply.status(401).send({ error: error.message });
+      }
+      return reply.status(500).send({ error: "Failed to create multipart upload" });
+    }
+  }
+
+  async getMultipartPartUrlByAlias(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { alias } = request.params as { alias: string };
+      const { password, uploadId, objectName, partNumber } = request.query as {
+        password?: string;
+        uploadId: string;
+        objectName: string;
+        partNumber: string;
+      };
+
+      if (!uploadId || !objectName || !partNumber) {
+        return reply.status(400).send({ error: "uploadId, objectName, and partNumber are required" });
+      }
+
+      const partNum = parseInt(partNumber);
+      if (isNaN(partNum) || partNum < 1 || partNum > 10000) {
+        return reply.status(400).send({ error: "partNumber must be between 1 and 10000" });
+      }
+
+      const result = await this.reverseShareService.getMultipartPartUrlByAlias(
+        alias,
+        uploadId,
+        objectName,
+        partNum,
+        password
+      );
+      return reply.status(200).send({ url: result.url });
+    } catch (error: any) {
+      console.error("[Multipart] Get part URL error:", error);
+      if (error.message === "Reverse share not found") {
+        return reply.status(404).send({ error: error.message });
+      }
+      if (error.message === "Reverse share is inactive") {
+        return reply.status(403).send({ error: error.message });
+      }
+      if (error.message === "Reverse share has expired") {
+        return reply.status(410).send({ error: error.message });
+      }
+      if (error.message === "Password required" || error.message === "Invalid password") {
+        return reply.status(401).send({ error: error.message });
+      }
+      return reply.status(500).send({ error: "Failed to get presigned URL for part" });
+    }
+  }
+
+  async completeMultipartUploadByAlias(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { alias } = request.params as { alias: string };
+      const { password } = request.query as { password?: string };
+      const { uploadId, objectName, parts } = request.body as {
+        uploadId: string;
+        objectName: string;
+        parts: Array<{ PartNumber: number; ETag: string }>;
+      };
+
+      if (!uploadId || !objectName || !parts || !Array.isArray(parts)) {
+        return reply.status(400).send({ error: "uploadId, objectName, and parts are required" });
+      }
+
+      const result = await this.reverseShareService.completeMultipartUploadByAlias(
+        alias,
+        uploadId,
+        objectName,
+        parts,
+        password
+      );
+      return reply.status(200).send(result);
+    } catch (error: any) {
+      console.error("[Multipart] Complete multipart upload error:", error);
+      if (error.message === "Reverse share not found") {
+        return reply.status(404).send({ error: error.message });
+      }
+      if (error.message === "Reverse share is inactive") {
+        return reply.status(403).send({ error: error.message });
+      }
+      if (error.message === "Reverse share has expired") {
+        return reply.status(410).send({ error: error.message });
+      }
+      if (error.message === "Password required" || error.message === "Invalid password") {
+        return reply.status(401).send({ error: error.message });
+      }
+      return reply.status(500).send({ error: "Failed to complete multipart upload" });
+    }
+  }
+
+  async abortMultipartUploadByAlias(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { alias } = request.params as { alias: string };
+      const { password } = request.query as { password?: string };
+      const { uploadId, objectName } = request.body as {
+        uploadId: string;
+        objectName: string;
+      };
+
+      if (!uploadId || !objectName) {
+        return reply.status(400).send({ error: "uploadId and objectName are required" });
+      }
+
+      const result = await this.reverseShareService.abortMultipartUploadByAlias(alias, uploadId, objectName, password);
+      return reply.status(200).send(result);
+    } catch (error: any) {
+      console.error("[Multipart] Abort multipart upload error:", error);
+      if (error.message === "Reverse share not found") {
+        return reply.status(404).send({ error: error.message });
+      }
+      if (error.message === "Reverse share is inactive") {
+        return reply.status(403).send({ error: error.message });
+      }
+      if (error.message === "Reverse share has expired") {
+        return reply.status(410).send({ error: error.message });
+      }
+      if (error.message === "Password required" || error.message === "Invalid password") {
+        return reply.status(401).send({ error: error.message });
+      }
+      return reply.status(500).send({ error: "Failed to abort multipart upload" });
+    }
+  }
+
+  async getReverseShareMetadataByAlias(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { alias } = request.params as { alias: string };
+      const metadata = await this.reverseShareService.getReverseShareMetadataByAlias(alias);
+      return reply.send(metadata);
+    } catch (error: any) {
+      if (error.message === "Reverse share not found") {
+        return reply.status(404).send({ error: error.message });
+      }
+      return reply.status(400).send({ error: error.message });
     }
   }
 }

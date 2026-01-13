@@ -592,4 +592,180 @@ export async function reverseShareRoutes(app: FastifyInstance) {
     },
     reverseShareController.copyFileToUserFiles.bind(reverseShareController)
   );
+
+  // Multipart upload routes for reverse shares (public - no auth required)
+  app.post(
+    "/reverse-shares/alias/:alias/multipart/create",
+    {
+      schema: {
+        tags: ["Reverse Share"],
+        operationId: "createMultipartUploadByAlias",
+        summary: "Create Multipart Upload for Reverse Share (Public)",
+        description:
+          "Initializes a multipart upload for large files (≥100MB) to a reverse share. Returns uploadId for subsequent part uploads.",
+        params: z.object({
+          alias: z.string().describe("Alias of the reverse share"),
+        }),
+        querystring: z.object({
+          password: z.string().optional().describe("Password for accessing password-protected reverse shares"),
+        }),
+        body: z.object({
+          filename: z.string().min(1).describe("The filename without extension"),
+          extension: z.string().min(1).describe("The file extension"),
+        }),
+        response: {
+          200: z.object({
+            uploadId: z.string().describe("The upload ID for this multipart upload"),
+            objectName: z.string().describe("The object name in storage"),
+            message: z.string().describe("Success message"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          403: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+          410: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    reverseShareController.createMultipartUploadByAlias.bind(reverseShareController)
+  );
+
+  app.get(
+    "/reverse-shares/alias/:alias/multipart/part-url",
+    {
+      schema: {
+        tags: ["Reverse Share"],
+        operationId: "getMultipartPartUrlByAlias",
+        summary: "Get Presigned URL for Part (Public)",
+        description: "Gets a presigned URL for uploading a specific part of a multipart upload to a reverse share",
+        params: z.object({
+          alias: z.string().describe("Alias of the reverse share"),
+        }),
+        querystring: z.object({
+          password: z.string().optional().describe("Password for accessing password-protected reverse shares"),
+          uploadId: z.string().min(1).describe("The multipart upload ID"),
+          objectName: z.string().min(1).describe("The object name"),
+          partNumber: z.string().min(1).describe("The part number (1-10000)"),
+        }),
+        response: {
+          200: z.object({
+            url: z.string().describe("The presigned URL for uploading this part"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          403: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+          410: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    reverseShareController.getMultipartPartUrlByAlias.bind(reverseShareController)
+  );
+
+  app.post(
+    "/reverse-shares/alias/:alias/multipart/complete",
+    {
+      schema: {
+        tags: ["Reverse Share"],
+        operationId: "completeMultipartUploadByAlias",
+        summary: "Complete Multipart Upload (Public)",
+        description: "Completes a multipart upload to a reverse share by combining all uploaded parts",
+        params: z.object({
+          alias: z.string().describe("Alias of the reverse share"),
+        }),
+        querystring: z.object({
+          password: z.string().optional().describe("Password for accessing password-protected reverse shares"),
+        }),
+        body: z.object({
+          uploadId: z.string().min(1).describe("The multipart upload ID"),
+          objectName: z.string().min(1).describe("The object name"),
+          parts: z
+            .array(
+              z.object({
+                PartNumber: z.number().min(1).max(10000).describe("The part number"),
+                ETag: z.string().min(1).describe("The ETag returned from uploading the part"),
+              })
+            )
+            .describe("Array of uploaded parts"),
+        }),
+        response: {
+          200: z.object({
+            message: z.string().describe("Success message"),
+            objectName: z.string().describe("The completed object name"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          403: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+          410: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    reverseShareController.completeMultipartUploadByAlias.bind(reverseShareController)
+  );
+
+  app.post(
+    "/reverse-shares/alias/:alias/multipart/abort",
+    {
+      schema: {
+        tags: ["Reverse Share"],
+        operationId: "abortMultipartUploadByAlias",
+        summary: "Abort Multipart Upload (Public)",
+        description: "Aborts a multipart upload to a reverse share and cleans up all uploaded parts",
+        params: z.object({
+          alias: z.string().describe("Alias of the reverse share"),
+        }),
+        querystring: z.object({
+          password: z.string().optional().describe("Password for accessing password-protected reverse shares"),
+        }),
+        body: z.object({
+          uploadId: z.string().min(1).describe("The multipart upload ID"),
+          objectName: z.string().min(1).describe("The object name"),
+        }),
+        response: {
+          200: z.object({
+            message: z.string().describe("Success message"),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ error: z.string() }),
+          403: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+          410: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+      },
+    },
+    reverseShareController.abortMultipartUploadByAlias.bind(reverseShareController)
+  );
+
+  app.get(
+    "/reverse-shares/alias/:alias/metadata",
+    {
+      schema: {
+        tags: ["Reverse Share"],
+        operationId: "getReverseShareMetadataByAlias",
+        summary: "Get reverse share metadata by alias for Open Graph",
+        description: "Get lightweight metadata for a reverse share by alias, used for social media previews",
+        params: z.object({
+          alias: z.string().describe("Alias of the reverse share"),
+        }),
+        response: {
+          200: z.object({
+            name: z.string().nullable(),
+            description: z.string().nullable(),
+            totalFiles: z.number(),
+            hasPassword: z.boolean(),
+            isExpired: z.boolean(),
+            isInactive: z.boolean(),
+            maxFiles: z.number().nullable(),
+          }),
+          404: z.object({ error: z.string() }),
+        },
+      },
+    },
+    reverseShareController.getReverseShareMetadataByAlias.bind(reverseShareController)
+  );
 }

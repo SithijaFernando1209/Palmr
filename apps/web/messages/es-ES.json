@@ -6,7 +6,13 @@
       "token_expired": "Token expirado. Por favor, inténtelo de nuevo.",
       "config_error": "Error de configuración. Por favor, contacte al soporte.",
       "auth_failed": "Error de autenticación. Por favor, inténtelo de nuevo."
-    }
+    },
+    "authenticationFailed": "Autenticación fallida",
+    "successfullyAuthenticated": "¡Autenticado exitosamente!"
+  },
+  "contextMenu": {
+    "newFolder": "Nueva carpeta",
+    "uploadFile": "Subir archivo"
   },
   "authProviders": {
     "title": "Proveedores de Autenticación",
@@ -150,7 +156,9 @@
     "move": "Mover",
     "rename": "Renombrar",
     "search": "Buscar",
-    "share": "Compartir"
+    "share": "Compartir",
+    "copied": "Copiado",
+    "copy": "Copiar"
   },
   "createShare": {
     "title": "Crear Compartir",
@@ -172,7 +180,14 @@
     "tabs": {
       "shareDetails": "Detalles del compartido",
       "selectFiles": "Seleccionar archivos"
-    }
+    },
+    "errors": {
+      "nameRequired": "El nombre del compartir es obligatorio",
+      "selectItems": "Por favor seleccione al menos un archivo o carpeta"
+    },
+    "itemsSelected": "{count} elementos seleccionados",
+    "passwordPlaceholder": "Ingrese contraseña",
+    "selectItemsPrompt": "Seleccione archivos y carpetas para compartir"
   },
   "customization": {
     "breadcrumb": "Personalización",
@@ -302,6 +317,7 @@
   },
   "filePreview": {
     "title": "Vista Previa del Archivo",
+    "description": "Vista previa y descarga de archivo",
     "loading": "Cargando...",
     "notAvailable": "Vista previa no disponible para este tipo de archivo.",
     "downloadToView": "Use el botón de descarga para descargar el archivo.",
@@ -337,7 +353,8 @@
     "addToShare": "Agregar a compartición",
     "removeFromShare": "Quitar de compartición",
     "saveChanges": "Guardar Cambios",
-    "editFolder": "Editar carpeta"
+    "editFolder": "Editar carpeta",
+    "itemsSelected": "{count} elementos seleccionados"
   },
   "files": {
     "title": "Todos los Archivos",
@@ -373,7 +390,12 @@
       "description": "Suba su primer archivo o cree una carpeta para comenzar"
     },
     "files": "archivos",
-    "folders": "carpetas"
+    "folders": "carpetas",
+    "errors": {
+      "moveItemsFailed": "Error al mover elementos. Por favor, inténtelo de nuevo.",
+      "cannotMoveHere": "No se pueden mover elementos a esta ubicación"
+    },
+    "openFolder": "Abrir carpeta"
   },
   "filesTable": {
     "ariaLabel": "Tabla de archivos",
@@ -536,7 +558,10 @@
     "movingTo": "Moviendo a:",
     "title": "Mover {count, plural, =1 {elemento} other {elementos}}",
     "description": "Mover {count, plural, =1 {elemento} other {elementos}} a una nueva ubicación",
-    "success": "Se movieron exitosamente {count} {count, plural, =1 {elemento} other {elementos}}"
+    "success": "Se movieron exitosamente {count} {count, plural, =1 {elemento} other {elementos}}",
+    "errors": {
+      "moveFailed": "Error al mover elementos"
+    }
   },
   "navbar": {
     "logoAlt": "Logo de la aplicación",
@@ -1056,7 +1081,8 @@
     "upload": {
       "metadata": {
         "title": "Enviar Archivos - Palmr",
-        "description": "Envía archivos a través del enlace compartido"
+        "description": "Envía archivos a través del enlace compartido",
+        "descriptionWithLimit": "Subir archivos (máx. {limit} archivos)"
       },
       "layout": {
         "defaultTitle": "Enviar Archivos",
@@ -1149,8 +1175,6 @@
       },
       "fileActions": {
         "edit": "Editar",
-        "save": "Guardar",
-        "cancel": "Cancelar",
         "preview": "Vista previa",
         "download": "Descargar",
         "delete": "Eliminar",
@@ -1298,6 +1322,10 @@
       "passwordAuthEnabled": {
         "title": "Autenticación por Contraseña",
         "description": "Habilitar o deshabilitar la autenticación basada en contraseña"
+      },
+      "hideVersion": {
+        "title": "Ocultar Versión",
+        "description": "Ocultar la versión de Palmr en el pie de página de todas las páginas"
       }
     },
     "buttons": {
@@ -1359,23 +1387,17 @@
       "description": "Esta compartición puede haber sido eliminada o haber expirado."
     },
     "pageTitle": "Compartición",
-    "downloadAll": "Descargar Todo"
+    "downloadAll": "Descargar Todo",
+    "metadata": {
+      "defaultDescription": "Compartir archivos de forma segura",
+      "filesShared": "{count, plural, =1 {1 archivo compartido} other {# archivos compartidos}}"
+    }
   },
   "shareActions": {
     "deleteTitle": "Eliminar Compartir",
     "deleteConfirmation": "¿Estás seguro de que deseas eliminar esta compartición? Esta acción no se puede deshacer.",
     "addDescriptionPlaceholder": "Agregar descripción...",
     "editTitle": "Editar Compartir",
-    "nameLabel": "Nombre del Compartir",
-    "descriptionLabel": "Descripción",
-    "descriptionPlaceholder": "Ingrese una descripción (opcional)",
-    "expirationLabel": "Fecha de Expiración",
-    "expirationPlaceholder": "DD/MM/AAAA HH:MM",
-    "maxViewsLabel": "Vistas Máximas",
-    "maxViewsPlaceholder": "Deje vacío para ilimitado",
-    "passwordProtection": "Protegido por Contraseña",
-    "passwordLabel": "Contraseña",
-    "passwordPlaceholder": "Ingrese contraseña",
     "newPasswordLabel": "Nueva Contraseña (deje vacío para mantener la actual)",
     "newPasswordPlaceholder": "Ingrese nueva contraseña",
     "manageFilesTitle": "Administrar Archivos",
@@ -1393,7 +1415,9 @@
     "linkDescriptionFile": "Genere un enlace personalizado para compartir el archivo",
     "linkDescriptionFolder": "Genere un enlace personalizado para compartir la carpeta",
     "linkReady": "Su enlace de compartición está listo:",
-    "linkTitle": "Generar enlace"
+    "linkTitle": "Generar enlace",
+    "itemsSelected": "{count} elementos seleccionados",
+    "manageFilesDescription": "Selecciona archivos y carpetas para incluir en este compartido"
   },
   "shareDetails": {
     "title": "Detalles del Compartir",
@@ -1409,7 +1433,6 @@
     "noLink": "Ningún enlace generado aún",
     "copyLink": "Copiar enlace",
     "openLink": "Abrir en nueva pestaña",
-    "linkCopied": "Enlace copiado al portapapeles",
     "views": "Visualizaciones",
     "dates": "Fechas",
     "created": "Creado",
@@ -1457,28 +1480,6 @@
     "expires": "Expira:",
     "expirationDate": "Fecha de Expiración"
   },
-  "shareFile": {
-    "title": "Compartir Archivo",
-    "linkTitle": "Generar Enlace",
-    "nameLabel": "Nombre del Compartir",
-    "namePlaceholder": "Ingrese nombre del compartir",
-    "descriptionLabel": "Descripción",
-    "descriptionPlaceholder": "Ingrese una descripción (opcional)",
-    "expirationLabel": "Fecha de Expiración",
-    "expirationPlaceholder": "DD/MM/AAAA HH:MM",
-    "maxViewsLabel": "Vistas Máximas",
-    "maxViewsPlaceholder": "Deje vacío para ilimitado",
-    "passwordProtection": "Protegido por Contraseña",
-    "passwordLabel": "Contraseña",
-    "passwordPlaceholder": "Ingrese contraseña",
-    "linkDescription": "Genere un enlace personalizado para compartir el archivo",
-    "aliasLabel": "Alias del Enlace",
-    "aliasPlaceholder": "Ingrese alias personalizado",
-    "linkReady": "Su enlace de compartir está listo:",
-    "createShare": "Crear Compartir",
-    "generateLink": "Generar Enlace",
-    "copyLink": "Copiar Enlace"
-  },
   "shareManager": {
     "deleteSuccess": "Compartición eliminada exitosamente",
     "deleteError": "Error al eliminar la compartición",
@@ -1508,7 +1509,10 @@
     "noFilesToDownload": "No hay archivos disponibles para descargar",
     "singleShareZipName": "{Sharename} _files.zip",
     "zipDownloadError": "No se pudo crear un archivo zip",
-    "zipDownloadSuccess": "Archivo zip descargado correctamente"
+    "zipDownloadSuccess": "Archivo zip descargado correctamente",
+    "errors": {
+      "multipleDownloadNotSupported": "Descarga múltiple de compartidos aún no soportada - por favor descarga los compartidos individualmente"
+    }
   },
   "shareMultipleFiles": {
     "title": "Compartir Múltiples Archivos",
@@ -1905,6 +1909,23 @@
       "inactive": "Inactivo",
       "admin": "Administrador",
       "userr": "Usuario"
+    },
+    "invite": {
+      "button": "Generar Enlace de Invitación",
+      "title": "Generar Enlace de Invitación de Usuario",
+      "description": "Genera un enlace de un solo uso que permite a alguien crear su propia cuenta. El enlace expira en 15 minutos.",
+      "generating": "Generando...",
+      "generate": "Generar Enlace",
+      "generated": "¡Enlace de invitación generado exitosamente!",
+      "linkReady": "Enlace de invitación listo",
+      "linkReadyDescription": "Comparte este enlace con la persona que deseas invitar. Podrán crear su propia cuenta como usuario regular.",
+      "copyLink": "Copiar Enlace",
+      "linkCopied": "¡Enlace de invitación copiado al portapapeles!",
+      "expiresIn": "Expira en 15 minutos",
+      "close": "Cerrar",
+      "errors": {
+        "generateFailed": "Error al generar el enlace de invitación"
+      }
     }
   },
   "validation": {
@@ -1921,5 +1942,60 @@
     "passwordRequired": "Se requiere la contraseña",
     "nameRequired": "El nombre es obligatorio",
     "required": "Este campo es obligatorio"
+  },
+  "embedCode": {
+    "title": "Insertar multimedia",
+    "description": "Utiliza estos códigos para insertar este contenido multimedia en foros, sitios web u otras plataformas",
+    "tabs": {
+      "directLink": "Enlace directo",
+      "html": "HTML",
+      "bbcode": "BBCode"
+    },
+    "directLinkDescription": "URL directa al archivo multimedia",
+    "htmlDescription": "Utiliza este código para insertar el contenido multimedia en páginas HTML",
+    "bbcodeDescription": "Utiliza este código para insertar el contenido multimedia en foros que admiten BBCode"
+  },
+  "registerWithInvite": {
+    "title": "Crea Tu Cuenta",
+    "description": "Completa la información a continuación para crear tu cuenta",
+    "labels": {
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Ingresa tu nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Ingresa tu apellido",
+      "username": "Nombre de Usuario",
+      "usernamePlaceholder": "Elige un nombre de usuario",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "Ingresa tu correo electrónico",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Elige una contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu contraseña"
+    },
+    "buttons": {
+      "creating": "Creando cuenta...",
+      "createAccount": "Crear Cuenta"
+    },
+    "validation": {
+      "firstNameRequired": "El nombre es obligatorio",
+      "lastNameRequired": "El apellido es obligatorio",
+      "usernameMinLength": "El nombre de usuario debe tener al menos 3 caracteres",
+      "invalidEmail": "Correo electrónico inválido",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "passwordsMatch": "Las contraseñas deben coincidir"
+    },
+    "messages": {
+      "success": "¡Cuenta creada exitosamente! Redirigiendo al inicio de sesión...",
+      "redirecting": "Redirigiendo al inicio de sesión..."
+    },
+    "errors": {
+      "invalidToken": "Error con el enlace de invitación",
+      "tokenUsed": "Este enlace de invitación ya ha sido utilizado",
+      "tokenExpired": "Este enlace de invitación ha expirado",
+      "usernameExists": "El nombre de usuario ya existe",
+      "emailExists": "El correo electrónico ya existe",
+      "createFailed": "Error al crear la cuenta. Por favor, inténtalo de nuevo."
+    },
+    "pageTitle": "Crear Cuenta"
   }
 }

@@ -1,7 +1,35 @@
 #!/bin/sh
 set -e
 
-echo "🌴 Starting Palmr Server..."
+echo "🚀 Starting Palmr Server..."
+
+# Wait for storage system credentials to be ready (if using internal storage)
+if [ "${ENABLE_S3}" != "true" ]; then
+    echo "⏳ Waiting for internal storage to initialize..."
+    MAX_WAIT=60
+    WAIT_COUNT=0
+    
+    while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+        if [ -f "/app/server/.minio-credentials" ]; then
+            echo "✅ Internal storage ready!"
+            break
+        fi
+        
+        WAIT_COUNT=$((WAIT_COUNT + 1))
+        echo "   Waiting for storage... ($WAIT_COUNT/$MAX_WAIT)"
+        sleep 1
+    done
+    
+    if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
+        echo "⚠️  WARNING: Internal storage not ready after ${MAX_WAIT}s"
+        echo "⚠️  Server will start but storage may not work until ready"
+    fi
+fi
+
+# Load storage system credentials if available
+if [ -f "/app/load-minio-credentials.sh" ]; then
+    . /app/load-minio-credentials.sh
+fi
 
 TARGET_UID=${PALMR_UID:-1000}
 TARGET_GID=${PALMR_GID:-1000}
@@ -10,12 +38,15 @@ if [ -n "$PALMR_UID" ] || [ -n "$PALMR_GID" ]; then
     echo "🔧 Runtime UID/GID: $TARGET_UID:$TARGET_GID"
     
     echo "🔐 Updating file ownership..."
-    chown -R $TARGET_UID:$TARGET_GID /app/palmr-app 2>/dev/null || echo "⚠️ Some ownership changes may have failed"
+    
+    # Only chown application files (these are small and fast)
+    find /app/palmr-app -maxdepth 2 -exec chown $TARGET_UID:$TARGET_GID {} + 2>/dev/null || echo "⚠️ Some app ownership changes may have failed"
+    
+    # Home directory is small, safe to chown
     chown -R $TARGET_UID:$TARGET_GID /home/palmr 2>/dev/null || echo "⚠️ Some home directory ownership changes may have failed"
     
-    if [ -d "/app/server" ]; then
-        chown -R $TARGET_UID:$TARGET_GID /app/server 2>/dev/null || echo "⚠️ Some data directory ownership changes may have failed"
-    fi
+    # /app/server is handled by the main startup script with smart marker
+    # No need to duplicate the work here
     
     echo "✅ UID/GID configuration completed"
 fi
@@ -31,8 +62,20 @@ echo "📁 Creating data directories..."
 mkdir -p /app/server/prisma /app/server/uploads /app/server/temp-uploads
 
 if [ "$(id -u)" = "0" ]; then
-    echo "🔐 Ensuring proper ownership before database operations..."
-    chown -R $TARGET_UID:$TARGET_GID /app/server/prisma 2>/dev/null || true
+    echo "🔐 Ensuring proper ownership for critical files..."
+    # Ensure base directories exist and have correct ownership
+    chown $TARGET_UID:$TARGET_GID /app/server/uploads /app/server/temp-uploads 2>/dev/null || true
+    chmod 755 /app/server/uploads /app/server/temp-uploads 2>/dev/null || true
+    
+    # Critical: Database files need read+write permissions
+    if [ -d "/app/server/prisma" ]; then
+        chown -R $TARGET_UID:$TARGET_GID /app/server/prisma 2>/dev/null || true
+        chmod -R 755 /app/server/prisma 2>/dev/null || true
+        # Ensure database file is writable
+        if [ -f "/app/server/prisma/palmr.db" ]; then
+            chmod 644 /app/server/prisma/palmr.db 2>/dev/null || true
+        fi
+    fi
 fi
 
 run_as_user() {

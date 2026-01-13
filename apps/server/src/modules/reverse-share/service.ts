@@ -228,9 +228,21 @@ export class ReverseShareService {
     }
 
     const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
-    const url = await this.fileService.getPresignedPutUrl(objectName, expires);
 
-    return { url, expiresIn: expires };
+    // Import storage config to check if using internal or external S3
+    const { isInternalStorage } = await import("../../config/storage.config.js");
+
+    if (isInternalStorage) {
+      // Internal storage: Use backend proxy for uploads (127.0.0.1 not accessible from client)
+      // Note: This would need request context, but reverse-shares are typically used by external users
+      // For now, we'll use presigned URLs and handle the error on the client side
+      const url = await this.fileService.getPresignedPutUrl(objectName, expires);
+      return { url, expiresIn: expires };
+    } else {
+      // External S3: Use presigned URLs directly (more efficient)
+      const url = await this.fileService.getPresignedPutUrl(objectName, expires);
+      return { url, expiresIn: expires };
+    }
   }
 
   async getPresignedUrlByAlias(alias: string, objectName: string, password?: string) {
@@ -258,9 +270,21 @@ export class ReverseShareService {
     }
 
     const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
-    const url = await this.fileService.getPresignedPutUrl(objectName, expires);
 
-    return { url, expiresIn: expires };
+    // Import storage config to check if using internal or external S3
+    const { isInternalStorage } = await import("../../config/storage.config.js");
+
+    if (isInternalStorage) {
+      // Internal storage: Use backend proxy for uploads (127.0.0.1 not accessible from client)
+      // Note: This would need request context, but reverse-shares are typically used by external users
+      // For now, we'll use presigned URLs and handle the error on the client side
+      const url = await this.fileService.getPresignedPutUrl(objectName, expires);
+      return { url, expiresIn: expires };
+    } else {
+      // External S3: Use presigned URLs directly (more efficient)
+      const url = await this.fileService.getPresignedPutUrl(objectName, expires);
+      return { url, expiresIn: expires };
+    }
   }
 
   async registerFileUpload(reverseShareId: string, fileData: UploadToReverseShareInput, password?: string) {
@@ -386,7 +410,11 @@ export class ReverseShareService {
     };
   }
 
-  async downloadReverseShareFile(fileId: string, creatorId: string) {
+  async downloadReverseShareFile(
+    fileId: string,
+    creatorId: string,
+    requestContext?: { protocol: string; host: string }
+  ) {
     const file = await this.reverseShareRepository.findFileById(fileId);
     if (!file) {
       throw new Error("File not found");
@@ -398,8 +426,19 @@ export class ReverseShareService {
 
     const fileName = file.name;
     const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
-    const url = await this.fileService.getPresignedGetUrl(file.objectName, expires, fileName);
-    return { url, expiresIn: expires };
+
+    // Import storage config to check if using internal or external S3
+    const { isInternalStorage } = await import("../../config/storage.config.js");
+
+    if (isInternalStorage) {
+      // Internal storage: Use frontend proxy (much simpler!)
+      const url = `/api/files/download?objectName=${encodeURIComponent(file.objectName)}`;
+      return { url, expiresIn: expires };
+    } else {
+      // External S3: Use presigned URLs directly (more efficient, no backend proxy)
+      const url = await this.fileService.getPresignedGetUrl(file.objectName, expires, fileName);
+      return { url, expiresIn: expires };
+    }
   }
 
   async deleteReverseShareFile(fileId: string, creatorId: string) {
@@ -568,76 +607,59 @@ export class ReverseShareService {
 
     const newObjectName = `${creatorId}/${Date.now()}-${file.name}`;
 
-    if (this.fileService.isFilesystemMode()) {
-      const { FilesystemStorageProvider } = await import("../../providers/filesystem-storage.provider.js");
-      const provider = FilesystemStorageProvider.getInstance();
+    // Copy file using S3 presigned URLs
+    const fileSizeMB = Number(file.size) / (1024 * 1024);
+    const needsStreaming = fileSizeMB > 100;
 
-      const sourcePath = provider.getFilePath(file.objectName);
-      const fs = await import("fs");
+    const downloadUrl = await this.fileService.getPresignedGetUrl(file.objectName, 300);
+    const uploadUrl = await this.fileService.getPresignedPutUrl(newObjectName, 300);
 
-      const targetPath = provider.getFilePath(newObjectName);
+    let retries = 0;
+    const maxRetries = 3;
+    let success = false;
 
-      const path = await import("path");
-      const targetDir = path.dirname(targetPath);
-      if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
-      }
+    while (retries < maxRetries && !success) {
+      try {
+        const response = await fetch(downloadUrl, {
+          signal: AbortSignal.timeout(600000), // 10 minutes timeout
+        });
 
-      const { copyFile } = await import("fs/promises");
-      await copyFile(sourcePath, targetPath);
-    } else {
-      const fileSizeMB = Number(file.size) / (1024 * 1024);
-      const needsStreaming = fileSizeMB > 100;
-
-      const downloadUrl = await this.fileService.getPresignedGetUrl(file.objectName, 300);
-      const uploadUrl = await this.fileService.getPresignedPutUrl(newObjectName, 300);
-
-      let retries = 0;
-      const maxRetries = 3;
-      let success = false;
-
-      while (retries < maxRetries && !success) {
-        try {
-          const response = await fetch(downloadUrl, {
-            signal: AbortSignal.timeout(600000), // 10 minutes timeout
-          });
-
-          if (!response.ok) {
-            throw new Error(`Failed to download file: ${response.statusText}`);
-          }
-
-          if (!response.body) {
-            throw new Error("No response body received");
-          }
-
-          const uploadOptions: any = {
-            method: "PUT",
-            body: response.body,
-            headers: {
-              "Content-Type": "application/octet-stream",
-              "Content-Length": file.size.toString(),
-            },
-            signal: AbortSignal.timeout(600000), // 10 minutes timeout
-          };
-
-          const uploadResponse = await fetch(uploadUrl, uploadOptions);
-
-          if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            throw new Error(`Failed to upload file: ${uploadResponse.statusText} - ${errorText}`);
-          }
-
-          success = true;
-        } catch (error: any) {
-          retries++;
-
-          if (retries >= maxRetries) {
-            throw new Error(`Failed to copy file after ${maxRetries} attempts: ${error.message}`);
-          }
-
-          const delay = Math.min(1000 * Math.pow(2, retries - 1), 10000);
-          await new Promise((resolve) => setTimeout(resolve, delay));
+        if (!response.ok) {
+          throw new Error(`Failed to download file: ${response.statusText}`);
         }
+
+        if (!response.body) {
+          throw new Error("No response body received");
+        }
+
+        const uploadOptions: any = {
+          method: "PUT",
+          body: response.body,
+          duplex: "half",
+          headers: {
+            "Content-Type": "application/octet-stream",
+            "Content-Length": file.size.toString(),
+          },
+          signal: AbortSignal.timeout(9600000), // 160 minutes timeout
+        };
+
+        const uploadResponse = await fetch(uploadUrl, uploadOptions);
+
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(`Failed to upload file: ${uploadResponse.statusText} - ${errorText}`);
+        }
+
+        success = true;
+      } catch (error: any) {
+        retries++;
+
+        if (retries >= maxRetries) {
+          throw new Error(`Failed to copy file after ${maxRetries} attempts: ${error.message}`);
+        }
+
+        const delay = Math.min(1000 * Math.pow(2, retries - 1), 10000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
@@ -758,6 +780,101 @@ export class ReverseShareService {
     return result;
   }
 
+  // Helper method to validate reverse share access (reduces duplication)
+  private async validateReverseShareAccessByAlias(alias: string, password?: string) {
+    const reverseShare = await this.reverseShareRepository.findByAlias(alias);
+    if (!reverseShare) {
+      throw new Error("Reverse share not found");
+    }
+
+    if (!reverseShare.isActive) {
+      throw new Error("Reverse share is inactive");
+    }
+
+    if (reverseShare.expiration && new Date(reverseShare.expiration) < new Date()) {
+      throw new Error("Reverse share has expired");
+    }
+
+    if (reverseShare.password) {
+      if (!password) {
+        throw new Error("Password required");
+      }
+      const isValidPassword = await this.reverseShareRepository.comparePassword(password, reverseShare.password);
+      if (!isValidPassword) {
+        throw new Error("Invalid password");
+      }
+    }
+
+    return reverseShare;
+  }
+
+  // Multipart upload methods for reverse shares
+  async createMultipartUploadByAlias(
+    alias: string,
+    filename: string,
+    extension: string,
+    password?: string
+  ): Promise<{ uploadId: string; objectName: string }> {
+    await this.validateReverseShareAccessByAlias(alias, password);
+
+    // Generate unique object name using timestamp and random suffix
+    const objectName = `reverse-shares/${alias}/${Date.now()}-${Math.random().toString(36).substring(7)}-${filename}.${extension}`;
+
+    const uploadId = await this.fileService.createMultipartUpload(objectName);
+
+    return {
+      uploadId,
+      objectName,
+    };
+  }
+
+  async getMultipartPartUrlByAlias(
+    alias: string,
+    uploadId: string,
+    objectName: string,
+    partNumber: number,
+    password?: string
+  ): Promise<{ url: string }> {
+    await this.validateReverseShareAccessByAlias(alias, password);
+
+    const expires = parseInt(env.PRESIGNED_URL_EXPIRATION);
+    const url = await this.fileService.getPresignedPartUrl(objectName, uploadId, partNumber, expires);
+
+    return { url };
+  }
+
+  async completeMultipartUploadByAlias(
+    alias: string,
+    uploadId: string,
+    objectName: string,
+    parts: Array<{ PartNumber: number; ETag: string }>,
+    password?: string
+  ): Promise<{ message: string; objectName: string }> {
+    await this.validateReverseShareAccessByAlias(alias, password);
+
+    await this.fileService.completeMultipartUpload(objectName, uploadId, parts);
+
+    return {
+      message: "Multipart upload completed successfully",
+      objectName,
+    };
+  }
+
+  async abortMultipartUploadByAlias(
+    alias: string,
+    uploadId: string,
+    objectName: string,
+    password?: string
+  ): Promise<{ message: string }> {
+    await this.validateReverseShareAccessByAlias(alias, password);
+
+    await this.fileService.abortMultipartUpload(objectName, uploadId);
+
+    return {
+      message: "Multipart upload aborted successfully",
+    };
+  }
+
   private formatFileResponse(file: any) {
     return {
       id: file.id,
@@ -771,6 +888,32 @@ export class ReverseShareService {
       reverseShareId: file.reverseShareId,
       createdAt: file.createdAt.toISOString(),
       updatedAt: file.updatedAt.toISOString(),
+    };
+  }
+
+  async getReverseShareMetadataByAlias(alias: string) {
+    const reverseShare = await this.reverseShareRepository.findByAlias(alias);
+    if (!reverseShare) {
+      throw new Error("Reverse share not found");
+    }
+
+    // Check if reverse share is expired
+    const isExpired = reverseShare.expiration ? new Date(reverseShare.expiration) < new Date() : false;
+
+    // Check if inactive
+    const isInactive = !reverseShare.isActive;
+
+    const totalFiles = reverseShare.files?.length || 0;
+    const hasPassword = !!reverseShare.password;
+
+    return {
+      name: reverseShare.name,
+      description: reverseShare.description,
+      totalFiles,
+      hasPassword,
+      isExpired,
+      isInactive,
+      maxFiles: reverseShare.maxFiles,
     };
   }
 }
